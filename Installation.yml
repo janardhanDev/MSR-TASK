@@ -1,0 +1,84 @@
+
+##TASK
+
+- hosts: all
+    become: true
+
+    tasks:
+    - name: gather ec2 facts
+      action: ec2_facts
+
+    #Installing apache 
+    - name: install apache on ubuntu instances
+      apt: name=apache2 state=present
+
+    - name: enable apache on startup and start service for Ubuntu
+      service: name=apache2 enabled=yes state=started
+ 
+ 
+    # sudo apt-get update
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+      tags:
+        - docker
+
+    # sudo apt-get install docker-ce=18.03.*
+    - name: Install docker
+      apt:
+        name: docker-ce=18.03.*
+        state: present
+        update_cache: yes
+      notify: Start docker on boot
+      tags:
+        - docker
+
+    # groupadd docker
+    - name: Create "docker" group
+      group:
+        name: "{{ docker_group }}"
+        state: present
+      tags:
+        - docker
+
+    # sudo usermod -aG docker ubuntu
+    - name: Add remote "ubuntu" user to "docker" group
+      user:
+        name: "{{ remote_user }}"
+        group: "{{ docker_group }}"
+        append: yes
+      tags:
+        - docker
+
+    # sudo apt-get install docker-compose=1.8.*
+    - name: Install docker-compose
+      apt:
+        name: docker-compose=1.8.*
+        state: present
+        update_cache: yes
+      tags:
+        - docker
+ 
+    #git Installation   
+    - name: Install git
+      gather_facts: false
+      roles:
+       - git_install
+ 
+    #NVM Installation      
+    - name: Install nvm
+      shell: >
+        curl https://raw.githubusercontent.com/creationix/nvm/v0.33.2/install.sh | sh
+        creates=/home/{{ ansible_user_id }}/.nvm/nvm.sh
+ 
+     #Node Installation       
+    - name: Install node and set version
+      shell: >
+        /bin/bash -c "source ~/.nvm/nvm.sh && nvm install 8.12 && nvm alias default 8.12"
+        creates=/home/{{ ansible_user_id }}/.nvm/alias
+        
+     
+
+
+        
+     

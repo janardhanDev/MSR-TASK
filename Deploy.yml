@@ -1,0 +1,18 @@
+##TASK
+
+
+- hosts: MSR-test-Instance-1
+  tasks:
+    - name: Installs apache web server
+      apt: pkg=apache state=installed update_cache=true
+      notify:
+        - start apache
+        
+    - name: Upload default index.html for host
+           copy: 
+                src=index.html 
+                dest=/var/www/html/ 
+      
+  handlers:
+    - name: start apache
+      service: name=apache state=started
